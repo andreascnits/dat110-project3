@@ -15,12 +15,14 @@ import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import no.hvl.dat110.chordoperations.ChordLookup;
 import no.hvl.dat110.middleware.Message;
 import no.hvl.dat110.rpc.interfaces.NodeInterface;
 
@@ -59,7 +61,13 @@ public class FileManager {
 	public void createReplicaFiles() {
 	 	
 		// set a loop where size = numReplicas
-		
+		for(int i = 0; i < Util.numReplicas; i++){
+			String replica = filename + i;
+
+			BigInteger hash = Hash.hashOf(replica);
+			replicafiles[i] = hash;
+		}
+
 		// replicate by adding the index to filename
 		
 		// hash the replica
@@ -79,15 +87,28 @@ public class FileManager {
     	int index = rnd.nextInt(Util.numReplicas-1);
     	
     	int counter = 0;
-	
+		
     	// Task1: Given a filename, make replicas and distribute them to all active peers such that: pred < replica <= peer
-    	
     	// Task2: assign a replica as the primary for this file. Hint, see the slide (project 3) on Canvas
     	
-    	// create replicas of the filename
-    	
+    	// create replicas of the filenamer
+		createReplicaFiles();
+
 		// iterate over the replicas
-    	
+    	for(int i = 0; i < replicafiles.length; i++){
+			BigInteger replica = replicafiles[i];
+			NodeInterface succ = chordnode.findSuccessor(replicafiles[i]);
+			succ.addKey(replica);
+
+
+			if(index == i){
+				succ.saveFileContent(filename, replica, bytesOfFile, true);
+			}else{
+				succ.saveFileContent(filename, replica, bytesOfFile, false);
+
+			}
+			counter++;
+		}
     	// for each replica, find its successor (peer/node) by performing findSuccessor(replica)
     	
     	// call the addKey on the successor and add the replica
@@ -109,14 +130,23 @@ public class FileManager {
 	public Set<Message> requestActiveNodesForFile(String filename) throws RemoteException {
 
 		this.filename = filename;
-		activeNodesforFile = new HashSet<Message>(); 
+		Set<Message> succInfo = new HashSet<Message>();
 
 		// Task: Given a filename, find all the peers that hold a copy of this file
 		
 		// generate the N replicas from the filename by calling createReplicaFiles()
-		
 		// iterate over the replicas of the file
+		createReplicaFiles();
+
+	for(int i = 0; i < replicafiles.length; i++){
+		BigInteger replica = replicafiles[i];
+		NodeInterface succ = chordnode.findSuccessor(replica);
 		
+		Message message = succ.getFilesMetadata().get(replica);
+		succInfo.add(message);
+		
+	}
+		this.activeNodesforFile = succInfo;
 		// for each replica, do findSuccessor(replica) that returns successor s.
 		
 		// get the metadata (Message) of the replica from the successor (i.e., active peer) of the file
@@ -134,6 +164,11 @@ public class FileManager {
 
 		// Task: Given all the active peers of a file (activeNodesforFile()), find which is holding the primary copy
 		
+			for(Message message : activeNodesforFile){
+				if(message.isPrimaryServer()){
+					return Util.getProcessStub(message.getNodeName(), message.getPort());
+				}
+			}
 		// iterate over the activeNodesforFile
 		
 		// for each active peer (saved as Message)

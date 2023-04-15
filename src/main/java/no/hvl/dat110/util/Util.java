@@ -7,6 +7,7 @@ package no.hvl.dat110.util;
  */
 
 import java.math.BigInteger;
+import java.rmi.*;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -44,9 +45,27 @@ public class Util {
 		// if id = 9, then (6 < 9 <= 2) = true
 		
 		// Task: given an identifier, id: check whether pred < id <= node
-		
-		return false;
+		boolean cond = false;
 
+		BigInteger adressSize = Hash.addressSize();
+
+		if(lower.compareTo(upper) > 0){
+			if(id.compareTo(upper) <= 0){
+				id = id.add(adressSize);
+			}
+			upper = upper.add(adressSize);
+		}
+
+		if((lower.compareTo(id) <= 0) && (id.compareTo(upper) <= 0)){
+			cond = true;
+		}
+		return cond;
+
+		/* if (upper.compareTo(lower) > 0) {
+			return id.compareTo(lower) >= 0 && id.compareTo(upper) <= 0;
+		} else {
+			return id.compareTo(lower) >= 0 || id.compareTo(upper) <= 0;
+		} */
 	}
 	
 	public static List<String> toString(List<NodeInterface> list) throws RemoteException {

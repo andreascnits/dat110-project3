@@ -25,10 +25,10 @@ class TestFilePeers {
 		SetUp setup = SetUp.getInstance();
 		if(!setup.isStarted()) {
 			setup.startProcesses();
-			Thread.sleep(12000); 			// let the ring stabilize before distributing files
+			Thread.sleep(12000); 			// let the ring stabilize before distributing files var 12000
 			// distribute the files to the ring
 			setup.doDistribute();
-			Thread.sleep(5000); 			// let the ring stabilize before starting the test
+			Thread.sleep(5000); 			// let the ring stabilize before starting the test var 5000
 		}
 
 	}
@@ -62,6 +62,9 @@ class TestFilePeers {
 		
 		Collections.sort(actualpeers);
 		Collections.sort(expectedpeers);
+
+		System.out.println("ACTUAL: " + actualpeers.toString());
+		System.out.println("EXPECTED: " + expectedpeers.toString());
 		
 		assertArrayEquals(expectedpeers.toArray(), actualpeers.toArray());
 	
